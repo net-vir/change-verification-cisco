@@ -16,7 +16,8 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/net-vir/change-verification-cisco.git'
+                // Checkout repo using default branch
+                git url: 'https://github.com/net-vir/change-verification-cisco.git'
             }
         }
 
@@ -33,16 +34,17 @@ pipeline {
 
         stage('Handle Input CSV') {
             steps {
-                sh "cp ${params.INPUT_CSV} input.csv"
+                // Copy uploaded CSV to input folder
+                sh "cp ${params.INPUT_CSV} input/devices.csv"
             }
         }
 
         stage('Run Script') {
             steps {
                 script {
-                    // Build dynamic output filename
+                    // Generate dynamic output filename based on parameters
                     def outFile = "output/${params.CHANGE_TYPE}_${params.CHANGE_ID}.txt"
-                    
+
                     sh """
                         . venv/bin/activate && \
                         ${env.PYTHON} your_script.py \
