@@ -1,0 +1,6 @@
+﻿HOSTNAME,MANAGEMENT_IP,COMMANDS
+router01,sandbox-iosxr-1.cisco.com,"term len 0
+show version
+show ip int brief"
+router01,sandbox-iosxr-1.cisco.com,"term len 0
+show int status"
