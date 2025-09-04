@@ -1,0 +1,54 @@
+pipeline {
+    agent any
+
+    parameters {
+        string(name: 'USERNAME', defaultValue: '', description: 'Device login username')
+        password(name: 'PASSWORD', defaultValue: '', description: 'Device login password')
+        string(name: 'CHANGE_ID', defaultValue: '', description: 'Change ID for tracking')
+        choice(name: 'CHANGE_TYPE', choices: ['PRE', 'POST'], description: 'Type of Change')
+        file(name: 'INPUT_CSV', description: 'Upload CSV file with device IPs and commands')
+    }
+
+    environment {
+        PYTHON = 'python3'
+    }
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main', url: 'https://github.com/net-vir/change-verification-cisco.git'
+            }
+        }
+
+        stage('Prepare Workspace') {
+            steps {
+                sh 'mkdir -p input output'
+                // Save uploaded CSV to input folder
+                script {
+                    def csvFile = params.INPUT_CSV
+                    writeFile file: "input.csv", text: csvFile.readToString()
+                }
+            }
+        }
+
+        stage('Run Python Script') {
+            steps {
+                sh """
+                    ${env.PYTHON} change-captures.py \
+                    --csv input.csv \
+                    --username ${params.USERNAME} \
+                    --password ${params.PASSWORD} \
+                    --change_id ${params.CHANGE_ID} \
+                    --change_type ${params.CHANGE_TYPE} \
+                    --output ${params.CHANGE_TYPE}_${params.CHANGE_ID}.txt
+                """
+            }
+        }
+
+        stage('Archive Results') {
+            steps {
+                archiveArtifacts artifacts: 'output/*', fingerprint: true
+            }
+        }
+    }
+}
