@@ -35,7 +35,7 @@ pipeline {
         stage('Handle Input CSV') {
             steps {
                 // Copy uploaded CSV to input folder
-                sh "cp ${params.INPUT_CSV} input.csv"
+                sh "cp ${params.INPUT_CSV} input/devices.csv"
             }
         }
 
