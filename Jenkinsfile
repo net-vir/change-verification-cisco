@@ -16,7 +16,6 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                // Checkout repo using default branch
                 git url: 'https://github.com/net-vir/change-verification-cisco.git'
             }
         }
@@ -26,6 +25,7 @@ pipeline {
                 sh '''
                     python3 -m venv venv
                     . venv/bin/activate
+                    pip install --upgrade pip
                     pip install -r requirements.txt
                     mkdir -p input output
                 '''
@@ -34,30 +34,27 @@ pipeline {
 
         stage('Handle Input CSV') {
             steps {
-                script {
-                    // Check if file was uploaded
-                    if (!params.INPUT_CSV) {
-                        error "No CSV file uploaded! Please provide INPUT_CSV."
-                    }
+                sh '''
+                    mkdir -p input
+                    # Check if file parameter exists
+                    if [ -z "${INPUT_CSV}" ]; then
+                        echo "ERROR: No CSV file uploaded! Please provide INPUT_CSV."
+                        exit 1
+                    fi
 
-                    // Get absolute path of the uploaded CSV
-                    def csvPath = params.INPUT_CSV.getAbsolutePath()
-                    echo "Uploaded CSV path: ${csvPath}"
+                    # Copy uploaded file to workspace input folder
+                    cp "${INPUT_CSV}" input/devices.csv
 
-                    // Copy to input folder
-                    sh 'mkdir -p input'
-                    sh "cp '${csvPath}' input/devices.csv"
-
-                    // Verify copy
-                    sh "ls -l input/"
-                }
+                    # Verify copy
+                    ls -l input/
+                '''
             }
         }
 
         stage('Run Script') {
             steps {
                 script {
-                    // Dynamic output file
+                    // Dynamic output filename
                     def outFile = "output/${params.CHANGE_TYPE}_${params.CHANGE_ID}.txt"
 
                     sh """
