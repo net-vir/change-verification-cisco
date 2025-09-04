@@ -34,15 +34,30 @@ pipeline {
 
         stage('Handle Input CSV') {
             steps {
-                // Copy uploaded CSV to input folder
-                sh "cp ${params.INPUT_CSV} input/devices.csv"
+                script {
+                    // Check if file was uploaded
+                    if (!params.INPUT_CSV) {
+                        error "No CSV file uploaded! Please provide INPUT_CSV."
+                    }
+
+                    // Get absolute path of the uploaded CSV
+                    def csvPath = params.INPUT_CSV.getAbsolutePath()
+                    echo "Uploaded CSV path: ${csvPath}"
+
+                    // Copy to input folder
+                    sh 'mkdir -p input'
+                    sh "cp '${csvPath}' input/devices.csv"
+
+                    // Verify copy
+                    sh "ls -l input/"
+                }
             }
         }
 
         stage('Run Script') {
             steps {
                 script {
-                    // Generate dynamic output filename based on parameters
+                    // Dynamic output file
                     def outFile = "output/${params.CHANGE_TYPE}_${params.CHANGE_ID}.txt"
 
                     sh """
